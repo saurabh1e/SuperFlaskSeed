@@ -33,7 +33,7 @@ mysql:
   image: mysql:latest
   environment:
     - MYSQL_ROOT_PASSWORD=root
-    - MYSQL_DATABASE=flask-test
+    - MYSQL_DATABASE=flasktest
   volumes_from:
     - data
   ports:
