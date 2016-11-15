@@ -1,40 +1,47 @@
-web:
-  restart: always
-  build: ./web
-  expose:
-    - "5000"
-  links:
-    - mysql:mysql
-  volumes:
-    - /usr/src/app/static
-  env_file: .env
-  command: /usr/local/bin/gunicorn -w 2 -b :5000 manager:app
+services:
+  web:
+    restart: always
+    working_dir: ./web
+    cpu_shares: 100
+    mem_limit: 524288000
+    expose:
+      - "5000"
+    links:
+      - mysql:mysql
+    volumes:
+      - /usr/src/app/static
+    env_file: .env
+    command: /usr/local/bin/gunicorn -w 2 -b :5000 manager:app
 
-nginx:
-  restart: always
-  build: ./nginx/
-  ports:
-    - "80:80"
-  volumes:
-    - /www/static
-  volumes_from:
-    - web
-  links:
-    - web:web
+  nginx:
+    restart: always
+    build: ./nginx/
+    cpu_shares: 100
+    mem_limit: 524288000
+    ports:
+      - "80:80"
+    volumes:
+      - /www/static
+    volumes_from:
+      - web
+    links:
+      - web:web
 
-data:
-  image: mysql:latest
-  volumes:
-    - /var/lib/mysql
-  command: "true"
+  data:
+    image: mysql:latest
+    volumes:
+      - /var/lib/mysql
+    command: "true"
 
-mysql:
-  restart: always
-  image: mysql:latest
-  environment:
-    - MYSQL_ROOT_PASSWORD=root
-    - MYSQL_DATABASE=flasktest
-  volumes_from:
-    - data
-  ports:
-    - "3306:3306"
+  mysql:
+    restart: always
+    image: mysql:latest
+    cpu_shares: 100
+    mem_limit: 524288000
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=flasktest
+    volumes_from:
+      - data
+    ports:
+      - "3306:3306"
