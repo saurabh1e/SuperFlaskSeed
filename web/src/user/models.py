@@ -1,7 +1,6 @@
 from datetime import datetime
 from sqlalchemy.ext.hybrid import hybrid_property
-from flask_user import UserMixin
-from flask_security import RoleMixin
+from flask_security import RoleMixin, UserMixin
 from sqlalchemy import UniqueConstraint
 
 from src import db, BaseMixin, ReprMixin

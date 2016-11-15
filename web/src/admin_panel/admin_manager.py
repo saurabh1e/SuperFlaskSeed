@@ -5,6 +5,7 @@ from flask_admin.contrib import sqla
 from src import admin, db
 from src.user.models import User, UserProfile, Role, PermissionSet, UserRole
 
+
 @login_required
 def index():
     return render_template('index.html')
@@ -13,8 +14,8 @@ def index():
 class MyModel(sqla.ModelView):
     column_display_pk = True
 
-    def is_accessible(self):
-        return current_user.has_role('admin')
+    # def is_accessible(self):
+    #     return current_user.has_role('admin')
 
 
 admin.add_view(MyModel(User, session=db.session))

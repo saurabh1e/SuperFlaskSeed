@@ -5,13 +5,13 @@ import urllib.parse as up
 from flask_script import Manager
 from flask import url_for
 
-from src import api, db, ma, create_app, configs, bp, security, admin, user_manager
+from src import api, db, ma, create_app, configs, bp, security, admin
 
 config = os.environ.get('PYTH_SRVR')
 
 config = configs.get(config, 'default')
 
-extensions = [api, db, ma, security, admin, user_manager]
+extensions = [api, db, ma, security, admin]
 bps = [bp]
 
 app = create_app(__name__, config, extensions=extensions, blueprints=bps)

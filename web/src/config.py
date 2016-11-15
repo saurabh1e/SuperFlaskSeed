@@ -37,7 +37,7 @@ class BaseConfig:
 
 class DevConfig(BaseConfig):
     DEBUG = True
-    SQLALCHEMY_DATABASE_URI = 'mysql://root:root@localhost/flask-test'
+    SQLALCHEMY_DATABASE_URI = 'mysql://root:root@192.168.99.100:3306/flasktest'
 
 
 class TestConfig(BaseConfig):

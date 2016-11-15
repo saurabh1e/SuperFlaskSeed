@@ -132,3 +132,4 @@ target/
 venv
 
 tests/cover
+*/migrations
