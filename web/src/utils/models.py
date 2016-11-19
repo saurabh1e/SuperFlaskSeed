@@ -17,7 +17,6 @@ class BaseMixin(object):
     def __tablename__(self):
         return to_underscore(self.__name__)
 
-    __table_args__ = {'mysql_engine': 'InnoDB'}
     __mapper_args__ = {'always_refresh': True}
 
     id = db.Column(db.Integer, primary_key=True)

@@ -53,7 +53,7 @@ class User(db.Model, BaseMixin, UserMixin, ReprMixin):
 class UserProfile(db.Model, BaseMixin):
     first_name = db.Column(db.String(255))
     last_name = db.Column(db.String(255))
-    gender = db.Column(db.Enum('male', 'female', 'na'), default='na')
+    gender = db.Column(db.Enum('male', 'female', 'na', name='gender'), default='na')
     dob = db.Column(db.DateTime, default=db.func.current_timestamp(), nullable=True)
     profile_picture = db.Column(db.Text(), nullable=True)
 
