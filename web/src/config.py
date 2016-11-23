@@ -38,7 +38,7 @@ class BaseConfig:
 class DevConfig(BaseConfig):
     DEBUG = True
     TESTING = True
-    SQLALCHEMY_DATABASE_URI = 'postgresql://postgres:@localhost/food_panda'
+    SQLALCHEMY_DATABASE_URI = 'postgresql://postgres:@localhost/flask_test'
 
 
 class TestConfig(BaseConfig):

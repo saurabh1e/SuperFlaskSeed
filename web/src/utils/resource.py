@@ -66,12 +66,12 @@ class ModelResource(object):
         if errors:
             db.session.rollback()
             return {'error': True, 'message': str(errors)}, 400
-        for obj in objects:
-            if self.has_add_permission(request, obj):
-                db.session.add(obj)
-            else:
-                db.session.rollback()
-                return {'error': True, 'Message': 'Forbidden Permission Denied To Add Resource'}, 403
+
+        if self.has_add_permission(request, objects):
+            db.session.add_all(objects)
+        else:
+            db.session.rollback()
+            return {'error': True, 'Message': 'Forbidden Permission Denied To Add Resource'}, 403
         try:
             db.session.commit()
         except IntegrityError:

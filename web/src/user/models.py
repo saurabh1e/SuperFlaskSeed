@@ -17,8 +17,7 @@ class UserRole(db.Model, BaseMixin):
     UniqueConstraint(user_id, role_id)
 
 
-class Role(db.Model, RoleMixin, ReprMixin):
-    id = db.Column(db.Integer(), primary_key=True)
+class Role(db.Model, BaseMixin, RoleMixin, ReprMixin):
     name = db.Column(db.String(80), unique=True)
     description = db.Column(db.String(255))
 

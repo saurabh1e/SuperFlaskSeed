@@ -28,13 +28,13 @@ class ApiFactory(Api):
 
             if klass.__bases__[0] == BaseDetailView:
                 self.app.add_url_rule(url + '<string:slug>/', endpoint=endpoint, view_func=view_func,
-                                      methods=['GET', "PUT", 'DELETE'], **kwargs)
+                                      methods=['GET', "PATCH", 'DELETE'], **kwargs)
             elif klass.__bases__[0] == AssociationView:
                 self.app.add_url_rule(url, endpoint=endpoint, view_func=view_func,
                                       methods=['PATCH'], **kwargs)
             else:
                 self.app.add_url_rule(url, endpoint=endpoint, view_func=view_func,
-                                      methods=['GET', "POST"], **kwargs)
+                                      methods=['GET', "POST", "PUT"], **kwargs)
             return klass
 
         return decorator
@@ -72,6 +72,16 @@ class BaseListView(Resource):
             return make_response(jsonify(e.message), e.status)
         return make_response(jsonify(data), status)
 
+    def put(self):
+
+        try:
+            data, status = self.resource().update_resource(request, obj)
+        except (SQLIntegrityError, SQlOperationalError) as e:
+            db.session.rollback()
+            e.message['error'] = True
+            return make_response(jsonify(e.message), e.status)
+        return make_response(jsonify(data), status)
+
 
 class BaseDetailView(Resource):
     resource = None
@@ -86,7 +96,7 @@ class BaseDetailView(Resource):
 
         return make_response(jsonify({'error': True, 'message': 'Resource not found'}), 404)
 
-    def put(self, slug):
+    def patch(self, slug):
         obj = self.resource.model.query.get(slug)
         if not obj:
             return make_response(jsonify({'error': True, 'message': 'Resource not found'}), 404)

@@ -32,6 +32,7 @@ class RoleSchema(BaseSchema):
     class Meta:
         model = Role
         exclude = ('users',)
+    name = ma.String()
 
 
 class UserRoleSchema(BaseSchema):
