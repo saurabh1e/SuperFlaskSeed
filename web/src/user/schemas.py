@@ -22,7 +22,8 @@ class UserProfileSchema(BaseSchema):
         model = UserProfile
         exclude = ('created_on', 'updated_on')
 
-    id = ma.Integer(dump_only=True)
+    id = ma.Integer(load=True)
+
     first_name = ma.String(load=True)
     user = ma.Nested('UserSchema', load=False)
 
@@ -40,6 +41,7 @@ class UserRoleSchema(BaseSchema):
     class Meta:
         model = UserRole
 
+    id = ma.Integer(load=True)
     user_id = ma.Integer(load=True)
     role_id = ma.Integer(load=True)
     user = ma.Nested('UserSchema', many=False)

@@ -40,7 +40,7 @@ class ModelResource(object):
 
     def patch_resource(self, request, obj):
         if self.has_change_permission(request, obj) and obj:
-            obj, errors = self.schema(exclude=(self.related_resource.keys())).load(request.json, instance=obj, partial=True)
+            obj, errors = self.schema().load(request.json, instance=obj, partial=True)
             if errors:
                 db.session.rollback()
                 return {'error': True, 'message': str(errors)}, 400
@@ -49,11 +49,11 @@ class ModelResource(object):
                 db.session.commit()
             except IntegrityError:
                 db.session.rollback()
-                raise SQLIntegrityError(data=request.json, message='Integrity Error', operation='Adding Resource',
+                raise SQLIntegrityError(data={}, message='Integrity Error', operation='Adding Resource',
                                         status=400)
             except OperationalError:
                 db.session.rollback()
-                raise SQlOperationalError(data=request.json, message='Operational Error', operation='Adding Resource',
+                raise SQlOperationalError(data={}, message='Operational Error', operation='Adding Resource',
                                           status=400)
             return {'success': True, 'message': 'obj updated successfully',
                     'data': self.schema().dump(obj).data}, 200
@@ -63,21 +63,23 @@ class ModelResource(object):
     def update_resource(self, request):
         data = request.json if isinstance(request.json, list) else [request.json]
         for d in data:
-            obj, errors = self.schema().make_instance(d)
+            obj = self.schema().get_instance(d)
+            obj, errors = self.schema().load(d, instance=obj)
             if errors:
                 db.session.rollback()
                 return {'error': True, 'message': str(errors)}, 400
 
             if not self.has_change_permission(request, obj):
+                db.session.rollback()
                 return {'error': True, 'Message': 'Forbidden Permission Denied To Add Resource'}, 403
-        try:
-            db.session.commit()
-        except IntegrityError:
-            db.session.rollback()
-            raise SQLIntegrityError(data=data, message='Integrity Error', operation='Adding Resource', status=400)
-        except OperationalError:
-            db.session.rollback()
-            raise SQlOperationalError(data=data, message='Operational Error', operation='Adding Resource', status=400)
+            try:
+                db.session.commit()
+            except IntegrityError:
+                db.session.rollback()
+                raise SQLIntegrityError(data=d, message='Integrity Error', operation='Adding Resource', status=400)
+            except OperationalError:
+                db.session.rollback()
+                raise SQlOperationalError(data=d, message='Operational Error', operation='Adding Resource', status=400)
         return {'success': True, 'message': 'Resource added successfully'}, 201
 
     def save_resource(self, request):
