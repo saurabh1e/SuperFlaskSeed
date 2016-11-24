@@ -10,19 +10,26 @@ class ModelResource(object):
 
     filters = {}
 
-    fields = ()
-
     max_limit = 100
 
     default_limit = 20
 
-    related_resource = {}
+    exclude_related_resource = ()
 
     order_by = []
 
     only = ()
 
     exclude = ()
+
+    page = 1
+
+    def __init__(self, **kwargs):
+        self.only = kwargs.pop('__only') if '__only' in kwargs else ()
+        self.exclude = kwargs.pop('__exclude') if '__exclude' in kwargs else ()
+        self.page = kwargs.pop('__page') if '__page' in kwargs else 1
+        self.limit = kwargs.pop('__limit') if '__limit' in kwargs and kwargs['__limit'] < self.default_limit \
+            else self.default_limit
 
     def apply_filters(self, queryset, **kwargs):
         for k, v in kwargs.items():
@@ -40,7 +47,7 @@ class ModelResource(object):
 
     def patch_resource(self, request, obj):
         if self.has_change_permission(request, obj) and obj:
-            obj, errors = self.schema().load(request.json, instance=obj, partial=True)
+            obj, errors = self.schema(exclude=self.exclude_related_resource).load(request.json, instance=obj, partial=True)
             if errors:
                 db.session.rollback()
                 return {'error': True, 'message': str(errors)}, 400
@@ -55,8 +62,7 @@ class ModelResource(object):
                 db.session.rollback()
                 raise SQlOperationalError(data={}, message='Operational Error', operation='Adding Resource',
                                           status=400)
-            return {'success': True, 'message': 'obj updated successfully',
-                    'data': self.schema().dump(obj).data}, 200
+            return {'success': True, 'message': 'obj updated successfully'}, 200
 
         return {'error': True, 'Message': 'Forbidden Permission Denied To Change Resource'}, 403
 
@@ -64,7 +70,7 @@ class ModelResource(object):
         data = request.json if isinstance(request.json, list) else [request.json]
         for d in data:
             obj = self.schema().get_instance(d)
-            obj, errors = self.schema().load(d, instance=obj)
+            obj, errors = self.schema(exclude=self.exclude_related_resource).load(d, instance=obj)
             if errors:
                 db.session.rollback()
                 return {'error': True, 'message': str(errors)}, 400

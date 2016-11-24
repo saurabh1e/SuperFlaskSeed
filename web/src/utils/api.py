@@ -47,19 +47,17 @@ class BaseListView(Resource):
     resource = None
 
     def get(self):
-        objects = self.resource().apply_filters(queryset=self.resource.model.query, **request.args)
-        objects = self.resource().has_read_permission(request, objects)
+        resource = self.resource(**request.args)
+        objects = resource.apply_filters(queryset=self.resource.model.query, **request.args)
+        objects = resource.has_read_permission(request, objects)
 
         if '__order_by' in request.args:
-            objects = self.resource().apply_ordering(objects, request.args['__order_by'])
+            objects = resource.apply_ordering(objects, request.args['__order_by'])
 
-        page = int(request.args['page']) if 'page' in request.args and request.args['page'] else 1
-        per_page = int(request.args['per_page']) if 'per_page' in request.args \
-                                                    and int(request.args['per_page']) < self.resource.max_limit \
-            else self.resource.default_limit
-        resources = objects.paginate(page=page, per_page=per_page)
+        resources = objects.paginate(page=resource.page, per_page=resource.limit)
         if resources.items:
-            return make_response(jsonify({'success': True, 'data': self.resource.schema()
+            return make_response(jsonify({'success': True, 'data': resource.schema(exclude=resource.exclude,
+                                                                                   only=resource.only)
                                          .dump(resources.items, many=True).data, 'total': resources.total}), 200)
         return make_response(jsonify({'error': True, 'Message': 'No Resource Found'}), 404)
 
@@ -87,11 +85,12 @@ class BaseDetailView(Resource):
     resource = None
 
     def get(self, slug):
-
+        resource = self.resource(**request.args)
         obj = self.resource.model.query.get(slug)
         if obj:
-            obj = self.resource().has_read_permission(request, obj)
-            return make_response(jsonify({'success': True, 'data': self.resource.schema().dump(obj, many=False).data})
+            obj = resource.has_read_permission(request, obj)
+            return make_response(jsonify({'success': True, 'data': self.resource.schema(exclude=resource.exclude,
+                                                                                   only=resource.only).dump(obj, many=False).data})
                                  , 200)
 
         return make_response(jsonify({'error': True, 'message': 'Resource not found'}), 404)
