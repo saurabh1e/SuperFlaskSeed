@@ -38,7 +38,7 @@ class ModelResource(object):
             queryset = queryset.order_by(getattr(self.model, order_by))
         return queryset
 
-    def update_resource(self, request, obj):
+    def patch_resource(self, request, obj):
         if self.has_change_permission(request, obj) and obj:
             obj, errors = self.schema(exclude=(self.related_resource.keys())).load(request.json, instance=obj, partial=True)
             if errors:
@@ -59,6 +59,26 @@ class ModelResource(object):
                     'data': self.schema().dump(obj).data}, 200
 
         return {'error': True, 'Message': 'Forbidden Permission Denied To Change Resource'}, 403
+
+    def update_resource(self, request):
+        data = request.json if isinstance(request.json, list) else [request.json]
+        for d in data:
+            obj, errors = self.schema().make_instance(d)
+            if errors:
+                db.session.rollback()
+                return {'error': True, 'message': str(errors)}, 400
+
+            if not self.has_change_permission(request, obj):
+                return {'error': True, 'Message': 'Forbidden Permission Denied To Add Resource'}, 403
+        try:
+            db.session.commit()
+        except IntegrityError:
+            db.session.rollback()
+            raise SQLIntegrityError(data=data, message='Integrity Error', operation='Adding Resource', status=400)
+        except OperationalError:
+            db.session.rollback()
+            raise SQlOperationalError(data=data, message='Operational Error', operation='Adding Resource', status=400)
+        return {'success': True, 'message': 'Resource added successfully'}, 201
 
     def save_resource(self, request):
         data = request.json if isinstance(request.json, list) else [request.json]

@@ -13,7 +13,7 @@ class UserSchema(BaseSchema):
     email = ma.Email(unique=True, primary_key=True, required=True)
     username = ma.String(required=True)
     user_profile = ma.Nested('UserProfileSchema', load=True, many=False, exclude=('user',))
-    roles = ma.Nested('RoleSchema', many=True, dump_only=True)
+    roles = ma.Nested('UserRoleSchema', many=True, dump_only=True, only=('role',))
 
 
 class UserProfileSchema(BaseSchema):
@@ -39,10 +39,11 @@ class UserRoleSchema(BaseSchema):
 
     class Meta:
         model = UserRole
-        exclude = ('users', 'roles')
 
     user_id = ma.Integer(load=True)
     role_id = ma.Integer(load=True)
+    user = ma.Nested('UserSchema', many=False)
+    role = ma.Nested('RoleSchema', many=False)
 
 
 class PermissionSetSchema(BaseSchema):

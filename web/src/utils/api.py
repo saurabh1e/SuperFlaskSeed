@@ -75,7 +75,7 @@ class BaseListView(Resource):
     def put(self):
 
         try:
-            data, status = self.resource().update_resource(request, obj)
+            data, status = self.resource().update_resource(request)
         except (SQLIntegrityError, SQlOperationalError) as e:
             db.session.rollback()
             e.message['error'] = True
@@ -101,7 +101,7 @@ class BaseDetailView(Resource):
         if not obj:
             return make_response(jsonify({'error': True, 'message': 'Resource not found'}), 404)
         try:
-            data, status = self.resource().update_resource(request, obj)
+            data, status = self.resource().patch_resource(request, obj)
         except (SQLIntegrityError, SQlOperationalError) as e:
             db.session.rollback()
             e.message['error'] = True
