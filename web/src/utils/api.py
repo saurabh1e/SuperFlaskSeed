@@ -48,11 +48,15 @@ class BaseListView(Resource):
     resource = None
 
     def __init__(self):
-        if self.resource:
-            if self.resource.auth_required:
-                self.method_decorators.append(auth_token_required)
-                self.method_decorators.append(roles_required(*[i for i in self.resource.roles_required]))
-                self.method_decorators.append(roles_accepted(*[i for i in self.resource.roles_accepted]))
+        if self.resource is not None:
+            self.add_method_decorator()
+
+    def add_method_decorator(self):
+        self.method_decorators = []
+        if self.resource.auth_required:
+            self.method_decorators.append(auth_token_required)
+            self.method_decorators.append(roles_required(*[i for i in self.resource.roles_required]))
+            self.method_decorators.append(roles_accepted(*[i for i in self.resource.roles_accepted]))
 
     def get(self):
         resource = self.resource(**request.args)
@@ -93,11 +97,15 @@ class BaseDetailView(Resource):
     resource = None
 
     def __init__(self):
-        if self.resource:
-            if self.resource.auth_required:
-                self.method_decorators.append(auth_token_required)
-                self.method_decorators.append(roles_required(*[i for i in self.resource.roles_required]))
-                self.method_decorators.append(roles_accepted(*[i for i in self.resource.roles_accepted]))
+        if self.resource is not None:
+            self.add_method_decorator()
+
+    def add_method_decorator(self):
+        self.method_decorators = []
+        if self.resource.auth_required:
+            self.method_decorators.append(auth_token_required)
+            self.method_decorators.append(roles_required(*[i for i in self.resource.roles_required]))
+            self.method_decorators.append(roles_accepted(*[i for i in self.resource.roles_accepted]))
 
     def get(self, slug):
         resource = self.resource(**request.args)
@@ -141,11 +149,15 @@ class AssociationView(Resource):
     resource = None
 
     def __init__(self):
-        if self.resource:
-            if self.resource.auth_required:
-                self.method_decorators.append(auth_token_required)
-                self.method_decorators.append(roles_required(*[i for i in self.resource.roles_required]))
-                self.method_decorators.append(roles_accepted(*[i for i in self.resource.roles_accepted]))
+        if self.resource is not None:
+            self.add_method_decorator()
+
+    def add_method_decorator(self):
+        self.method_decorators = []
+        if self.resource.auth_required:
+            self.method_decorators.append(auth_token_required)
+            self.method_decorators.append(roles_required(*[i for i in self.resource.roles_required]))
+            self.method_decorators.append(roles_accepted(*[i for i in self.resource.roles_accepted]))
 
     def patch(self):
 
