@@ -13,7 +13,7 @@ class UserSchema(BaseSchema):
     email = ma.Email(unique=True, primary_key=True, required=True)
     username = ma.String(required=True)
     user_profile = ma.Nested('UserProfileSchema', load=True, many=False, exclude=('user',))
-    roles = ma.Nested('UserRoleSchema', many=True, dump_only=True, only=('role',))
+    roles = ma.Nested('RoleSchema', many=True, dump_only=True)
 
 
 class UserProfileSchema(BaseSchema):

@@ -11,8 +11,8 @@ class UserRole(db.Model, BaseMixin):
     user_id = db.Column(db.Integer(), db.ForeignKey('user.id', ondelete='CASCADE'))
     role_id = db.Column(db.Integer(), db.ForeignKey('role.id', ondelete='CASCADE'))
 
-    user = db.relationship('User', back_populates='roles')
-    role = db.relationship('Role', back_populates='users')
+    user = db.relationship('User', foreign_keys=[user_id])
+    role = db.relationship('Role', foreign_keys=[role_id])
 
     UniqueConstraint(user_id, role_id)
 
@@ -21,7 +21,7 @@ class Role(db.Model, BaseMixin, RoleMixin, ReprMixin):
     name = db.Column(db.String(80), unique=True)
     description = db.Column(db.String(255))
 
-    users = db.relationship('UserRole', back_populates='role')
+    users = db.relationship('User', back_populates='roles', secondary='user_role')
 
 
 class User(db.Model, BaseMixin, UserMixin, ReprMixin):
@@ -37,7 +37,7 @@ class User(db.Model, BaseMixin, UserMixin, ReprMixin):
     last_login_ip = db.Column(db.String(45))
     current_login_ip = db.Column(db.String(45))
     login_count = db.Column(db.Integer)
-    roles = db.relationship('UserRole', back_populates='user')
+    roles = db.relationship('Role', back_populates='users', secondary='user_role')
 
     user_profile = db.relationship("UserProfile", uselist=False, back_populates="user", cascade='all, delete-orphan')
 

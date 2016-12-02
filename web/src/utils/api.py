@@ -2,6 +2,7 @@ import re
 from flask_restful import Api
 from flask_restful import Resource
 from flask import request, jsonify, make_response
+from flask_security import auth_token_required, roles_accepted, roles_required
 
 from .models import db
 from .blue_prints import bp
@@ -46,6 +47,13 @@ api = ApiFactory(bp)
 class BaseListView(Resource):
     resource = None
 
+    def __init__(self):
+        if self.resource:
+            if self.resource.auth_required:
+                self.method_decorators.append(auth_token_required)
+                self.method_decorators.append(roles_required(*[i for i in self.resource.roles_required]))
+                self.method_decorators.append(roles_accepted(*[i for i in self.resource.roles_accepted]))
+
     def get(self):
         resource = self.resource(**request.args)
         objects = resource.apply_filters(queryset=self.resource.model.query, **request.args)
@@ -83,6 +91,13 @@ class BaseListView(Resource):
 
 class BaseDetailView(Resource):
     resource = None
+
+    def __init__(self):
+        if self.resource:
+            if self.resource.auth_required:
+                self.method_decorators.append(auth_token_required)
+                self.method_decorators.append(roles_required(*[i for i in self.resource.roles_required]))
+                self.method_decorators.append(roles_accepted(*[i for i in self.resource.roles_accepted]))
 
     def get(self, slug):
         resource = self.resource(**request.args)
@@ -124,6 +139,13 @@ class BaseDetailView(Resource):
 class AssociationView(Resource):
 
     resource = None
+
+    def __init__(self):
+        if self.resource:
+            if self.resource.auth_required:
+                self.method_decorators.append(auth_token_required)
+                self.method_decorators.append(roles_required(*[i for i in self.resource.roles_required]))
+                self.method_decorators.append(roles_accepted(*[i for i in self.resource.roles_accepted]))
 
     def patch(self):
 

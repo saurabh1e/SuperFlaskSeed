@@ -24,6 +24,12 @@ class ModelResource(object):
 
     page = 1
 
+    auth_required = False
+
+    roles_accepted = ()
+
+    roles_required = ()
+
     def __init__(self, **kwargs):
         self.only = kwargs.pop('__only') if '__only' in kwargs else ()
         self.exclude = kwargs.pop('__exclude') if '__exclude' in kwargs else ()
