@@ -25,11 +25,19 @@ Flask Seed is a production ready seed app with following plugins integrated.
       -  order_by = []
       -  only = ()
       -  exclude = ()
+      - auth_required = False/True
+        - roles_accepted = () `access if any of these roles assigned to user`
+        - roles_required = () `access if all of these roles assigned to user`
   -  Define View for your resource
-     - View are of 3 types List, Detail and Association View.
-     - List View for Filtering on a resource and creating new resources
-     - Detail View getting single instabce of a resource, updating single instance of resource or deleting it.
-     - AssociationView for Association table to create, delete or update relation among Resources.
+     - Add methods to api_methods in your view (BulkUpdate, List, Fetch, Create, Delete, Update)
+     - View are of 2 types Base and Association View.
+     - Base view supports (BulkUpdate, List, Fetch, Create, Delete, Update) 
+       - BulkUpdate `PUT update single or multiple resource`
+       - Save `POST save single or multiple resource`
+       - Update `PATCH update single resource`
+       - List `GET fetch multiple resource`
+       - Fetch `GET fetch single resource`
+     - AssociationView for Association table to create, delete or update relation among Resources using Patch call.
 
 
 ### Example
@@ -151,15 +159,10 @@ class UserResource(ModelResource):
 ```sh
 
 @api.register()
-class UserListView(BaseListView):
+class UserListView(BaseView):
     resource = UserResource
-
-
-@api.register()
-class UserDetailView(BaseDetailView):
-    resource = UserResource
-
-
+    
+    
 @api.register()
 class UserRoleAssociationView(AssociationView):
 
@@ -171,7 +174,7 @@ This will create following resource's
 - /user/<slug>/
     - GET /user/1/
     -     Get single instance of resource
-    - PUT /user/1/
+    - PATCH /user/1/
     -     Update single instance of resource
     - Delete /user/1/
     -     Delete single instance of resource
@@ -180,6 +183,8 @@ This will create following resource's
     -     Get multiple instance of resource
     - POST /user/
     -      Create multiple or single instance of resource
+    - PUT /user/
+    -      Update multiple or single instance of resource
 - /user_role/
     -  Patch /user_role/
     -     Patch multiple association among resource
