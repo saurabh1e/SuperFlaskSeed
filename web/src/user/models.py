@@ -39,7 +39,8 @@ class User(db.Model, BaseMixin, UserMixin, ReprMixin):
     login_count = db.Column(db.Integer)
     roles = db.relationship('Role', back_populates='users', secondary='user_role')
 
-    user_profile = db.relationship("UserProfile", uselist=False, back_populates="user", cascade='all, delete-orphan')
+    user_profile = db.relationship("UserProfile", uselist=False, back_populates="user",
+                                   cascade='all, delete-orphan', lazy='subquery')
 
     @hybrid_property
     def name(self):

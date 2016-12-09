@@ -7,6 +7,7 @@ from flask_security import auth_token_required, roles_accepted, roles_required
 from .models import db
 from .blue_prints import bp
 from .exceptions import ResourceNotFound, SQLIntegrityError, SQlOperationalError, CustomException
+from .methods import BulkUpdate, List, Fetch, Create, Delete, Update
 
 
 def to_underscore(name):
@@ -26,16 +27,15 @@ class ApiFactory(Api):
             url = kwargs.pop('url', '/%s/' % to_underscore(klass.resource.model.__name__))
             endpoint = to_underscore(klass.__name__)
             view_func = klass.as_view(name)
+            methods = klass.api_methods
 
-            if klass.__bases__[0] == BaseDetailView:
-                self.app.add_url_rule(url + '<string:slug>/', endpoint=endpoint, view_func=view_func,
-                                      methods=['GET', "PATCH", 'DELETE'], **kwargs)
-            elif klass.__bases__[0] == AssociationView:
-                self.app.add_url_rule(url, endpoint=endpoint, view_func=view_func,
-                                      methods=['PATCH'], **kwargs)
-            else:
-                self.app.add_url_rule(url, endpoint=endpoint, view_func=view_func,
-                                      methods=['GET', "POST", "PUT"], **kwargs)
+            for method in methods:
+                if method.slug:
+                    self.app.add_url_rule(url + '<string:slug>/', endpoint=endpoint, view_func=view_func,
+                                          methods=[method.method], **kwargs)
+                else:
+                    self.app.add_url_rule(url, endpoint=endpoint, view_func=view_func,
+                                          methods=[method.method], **kwargs)
             return klass
 
         return decorator
@@ -44,8 +44,10 @@ class ApiFactory(Api):
 api = ApiFactory(bp)
 
 
-class BaseListView(Resource):
+class BaseView(Resource):
     resource = None
+
+    api_methods = [BulkUpdate, List, Fetch, Create, Delete, Update]
 
     def __init__(self):
         if self.resource is not None:
@@ -58,20 +60,33 @@ class BaseListView(Resource):
             self.method_decorators.append(roles_required(*[i for i in self.resource.roles_required]))
             self.method_decorators.append(roles_accepted(*[i for i in self.resource.roles_accepted]))
 
-    def get(self):
-        resource = self.resource(**request.args)
-        objects = resource.apply_filters(queryset=self.resource.model.query, **request.args)
-        objects = resource.has_read_permission(request, objects)
+    def get(self, slug=None):
+        if slug:
+            resource = self.resource(**request.args)
+            obj = self.resource.model.query.get(slug)
+            if obj:
+                obj = resource.has_read_permission(request, obj)
+                return make_response(jsonify({'success': True, 'data': self.resource.schema(exclude=resource.exclude,
+                                                                                            only=resource.only).dump(
+                    obj, many=False).data})
+                                     , 200)
 
-        if '__order_by' in request.args:
-            objects = resource.apply_ordering(objects, request.args['__order_by'])
+            return make_response(jsonify({'error': True, 'message': 'Resource not found'}), 404)
 
-        resources = objects.paginate(page=resource.page, per_page=resource.limit)
-        if resources.items:
-            return make_response(jsonify({'success': True, 'data': resource.schema(exclude=resource.exclude,
-                                                                                   only=resource.only)
-                                         .dump(resources.items, many=True).data, 'total': resources.total}), 200)
-        return make_response(jsonify({'error': True, 'Message': 'No Resource Found'}), 404)
+        else:
+            resource = self.resource(**request.args)
+            objects = resource.apply_filters(queryset=self.resource.model.query, **request.args)
+            objects = resource.has_read_permission(request, objects)
+
+            if '__order_by' in request.args:
+                objects = resource.apply_ordering(objects, request.args['__order_by'])
+
+            resources = objects.paginate(page=resource.page, per_page=resource.limit)
+            if resources.items:
+                return make_response(jsonify({'success': True, 'data': resource.schema(exclude=resource.exclude,
+                                                                                       only=resource.only)
+                                             .dump(resources.items, many=True).data, 'total': resources.total}), 200)
+            return make_response(jsonify({'error': True, 'Message': 'No Resource Found'}), 404)
 
     def post(self):
         try:
@@ -91,32 +106,6 @@ class BaseListView(Resource):
             e.message['error'] = True
             return make_response(jsonify(e.message), e.status)
         return make_response(jsonify(data), status)
-
-
-class BaseDetailView(Resource):
-    resource = None
-
-    def __init__(self):
-        if self.resource is not None:
-            self.add_method_decorator()
-
-    def add_method_decorator(self):
-        self.method_decorators = []
-        if self.resource.auth_required:
-            self.method_decorators.append(auth_token_required)
-            self.method_decorators.append(roles_required(*[i for i in self.resource.roles_required]))
-            self.method_decorators.append(roles_accepted(*[i for i in self.resource.roles_accepted]))
-
-    def get(self, slug):
-        resource = self.resource(**request.args)
-        obj = self.resource.model.query.get(slug)
-        if obj:
-            obj = resource.has_read_permission(request, obj)
-            return make_response(jsonify({'success': True, 'data': self.resource.schema(exclude=resource.exclude,
-                                                                                   only=resource.only).dump(obj, many=False).data})
-                                 , 200)
-
-        return make_response(jsonify({'error': True, 'message': 'Resource not found'}), 404)
 
     def patch(self, slug):
         obj = self.resource.model.query.get(slug)
@@ -148,6 +137,8 @@ class AssociationView(Resource):
 
     resource = None
 
+    api_methods = [Update]
+
     def __init__(self):
         if self.resource is not None:
             self.add_method_decorator()
@@ -159,7 +150,7 @@ class AssociationView(Resource):
             self.method_decorators.append(roles_required(*[i for i in self.resource.roles_required]))
             self.method_decorators.append(roles_accepted(*[i for i in self.resource.roles_accepted]))
 
-    def patch(self):
+    def update(self):
 
         data = request.json if isinstance(request.json, list) else [request.json]
         for d in data:

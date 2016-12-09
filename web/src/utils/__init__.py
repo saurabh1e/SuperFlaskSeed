@@ -1,4 +1,4 @@
-from .api import api, BaseDetailView, BaseListView, AssociationView
+from .api import api, BaseView, AssociationView
 from .models import db, ReprMixin, BaseMixin
 from .factory import create_app
 from .schema import ma, BaseSchema

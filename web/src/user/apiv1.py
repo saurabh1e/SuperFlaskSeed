@@ -1,35 +1,20 @@
-from src.utils import BaseDetailView, BaseListView, AssociationView
+from src.utils import BaseView, AssociationView
 from .resources import UserResource, UserProfileResource, UserRoleResource, RoleResource
 from src import api
 
 
 @api.register()
-class UserListView(BaseListView):
+class UserListView(BaseView):
     resource = UserResource
 
 
 @api.register()
-class UserDetailView(BaseDetailView):
-    resource = UserResource
-
-
-@api.register()
-class UserProfileListView(BaseListView):
+class UserProfileListView(BaseView):
     resource = UserProfileResource
 
 
 @api.register()
-class UserProfileDetailView(BaseDetailView):
-    resource = UserProfileResource
-
-
-@api.register()
-class RoleListView(BaseListView):
-    resource = RoleResource
-
-
-@api.register()
-class RoleDetailView(BaseDetailView):
+class RoleListView(BaseView):
     resource = RoleResource
 
 

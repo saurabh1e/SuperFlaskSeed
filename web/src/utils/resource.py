@@ -76,7 +76,7 @@ class ModelResource(object):
         data = request.json if isinstance(request.json, list) else [request.json]
         for d in data:
             obj = self.schema().get_instance(d)
-            obj, errors = self.schema(exclude=self.exclude_related_resource).load(d, instance=obj)
+            obj, errors = self.schema().load(d, instance=obj)
             if errors:
                 db.session.rollback()
                 return {'error': True, 'message': str(errors)}, 400
@@ -88,11 +88,11 @@ class ModelResource(object):
                 db.session.commit()
             except IntegrityError:
                 db.session.rollback()
-                raise SQLIntegrityError(data=d, message='Integrity Error', operation='Adding Resource', status=400)
+                raise SQLIntegrityError(data=d, message='Integrity Error', operation='Updating Resource', status=400)
             except OperationalError:
                 db.session.rollback()
-                raise SQlOperationalError(data=d, message='Operational Error', operation='Adding Resource', status=400)
-        return {'success': True, 'message': 'Resource added successfully'}, 201
+                raise SQlOperationalError(data=d, message='Operational Error', operation='Updating Resource', status=400)
+        return {'success': True, 'message': 'Resource Updated successfully'}, 201
 
     def save_resource(self, request):
         data = request.json if isinstance(request.json, list) else [request.json]
