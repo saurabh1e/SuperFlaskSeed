@@ -5,5 +5,5 @@ from .schema import ma, BaseSchema
 from .blue_prints import bp
 from .admin import admin
 from .resource import ModelResource, AssociationModelResource
-
+from .oauth import oauth
 
