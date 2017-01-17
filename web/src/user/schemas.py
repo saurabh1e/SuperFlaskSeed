@@ -1,5 +1,5 @@
 from src import ma, BaseSchema
-from .models import UserProfile, User, Role, PermissionSet, UserRole
+from .models import UserProfile, User, Role, Permission, UserRole
 
 
 class UserSchema(BaseSchema):
@@ -48,9 +48,9 @@ class UserRoleSchema(BaseSchema):
     role = ma.Nested('RoleSchema', many=False)
 
 
-class PermissionSetSchema(BaseSchema):
+class PermissionSchema(BaseSchema):
 
     class Meta:
-        model = PermissionSet
+        model = Permission
         exclude = ('users',)
 
