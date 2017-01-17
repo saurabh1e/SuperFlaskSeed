@@ -1,9 +1,18 @@
-from datetime import datetime
-from sqlalchemy.ext.hybrid import hybrid_property
 from flask_security import RoleMixin, UserMixin
 from sqlalchemy import UniqueConstraint
 
 from src import db, BaseMixin, ReprMixin
+
+
+class UserPermission(db.Model, BaseMixin):
+
+    user_id = db.Column(db.Integer(), db.ForeignKey('user.id', ondelete='CASCADE'))
+    permission_id = db.Column(db.Integer(), db.ForeignKey('permission.id', ondelete='CASCADE'))
+
+    user = db.relationship('User', foreign_keys=[user_id])
+    permission = db.relationship('Permission', foreign_keys=[permission_id])
+
+    UniqueConstraint(user_id, permission_id)
 
 
 class UserRole(db.Model, BaseMixin):
@@ -38,16 +47,16 @@ class User(db.Model, BaseMixin, UserMixin, ReprMixin):
     current_login_ip = db.Column(db.String(45))
     login_count = db.Column(db.Integer)
     roles = db.relationship('Role', back_populates='users', secondary='user_role')
+    permissions = db.relationship('Permission', back_populates='users', secondary='user_permission')
 
     user_profile = db.relationship("UserProfile", uselist=False, back_populates="user",
                                    cascade='all, delete-orphan', lazy='subquery')
 
-    @hybrid_property
-    def name(self):
-        if self.user_profile and self.user_profile.first_name:
-            if self.user_profile.last_name:
-                return self.user_profile.first_name + self.user_profile.last_name
-            return self.user_profile.first_name
+    def has_permission(self, permission):
+        if isinstance(permission, str):
+            return permission in (permission.name for permission in self.permissions)
+        else:
+            return permission in self.permissions
 
 
 class UserProfile(db.Model, BaseMixin):
@@ -61,16 +70,10 @@ class UserProfile(db.Model, BaseMixin):
 
     user = db.relationship('User', back_populates="user_profile", single_parent=True)
 
-    @hybrid_property
-    def age(self):
-        if self.dob:
-            return datetime.now().year - self.dob.year
-        else:
-            return 0
 
-
-class PermissionSet(db.Model, BaseMixin, ReprMixin):
+class Permission(db.Model, BaseMixin, ReprMixin):
 
     name = db.Column(db.String(80), unique=True)
     description = db.Column(db.String(255))
 
+    users = db.relationship('User', back_populates='permissions', secondary='user_permission')
