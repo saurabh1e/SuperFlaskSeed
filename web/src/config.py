@@ -27,6 +27,7 @@ class BaseConfig:
     SECURITY_POST_LOGIN_VIEW = '/test/v1/admin/'
     AUTH_HEADER_NAME = 'authentication-token'
     MAX_AGE = 86400
+    OAUTH2_PROVIDER_TOKEN_EXPIRES_IN = 86400
 
     @staticmethod
     def init_app(app):

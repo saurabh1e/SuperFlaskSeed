@@ -94,3 +94,4 @@ wcwidth==0.1.7
 Werkzeug==0.11.11
 widgetsnbextension==1.2.6
 WTForms==2.1
+-e git://github.com/saurabh1e/flask_admin_impexp.git@master#egg=flask_admin_impexp
