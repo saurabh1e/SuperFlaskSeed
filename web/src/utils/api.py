@@ -17,7 +17,7 @@ def to_underscore(name):
 
 class ApiFactory(Api):
     def init_app(self, app):
-        super().init_app(app)
+        super(ApiFactory, self).init_app(app)
 
     def register(self, **kwargs):
 
@@ -56,9 +56,9 @@ class BaseView(Resource):
     def add_method_decorator(self):
         self.method_decorators = []
         if self.resource.auth_required:
-            self.method_decorators.append(auth_token_required)
             self.method_decorators.append(roles_required(*[i for i in self.resource.roles_required]))
             self.method_decorators.append(roles_accepted(*[i for i in self.resource.roles_accepted]))
+            self.method_decorators.append(auth_token_required)
 
     def get(self, slug=None):
         if slug:
@@ -146,9 +146,9 @@ class AssociationView(Resource):
     def add_method_decorator(self):
         self.method_decorators = []
         if self.resource.auth_required:
-            self.method_decorators.append(auth_token_required)
             self.method_decorators.append(roles_required(*[i for i in self.resource.roles_required]))
             self.method_decorators.append(roles_accepted(*[i for i in self.resource.roles_accepted]))
+            self.method_decorators.append(auth_token_required)
 
     def update(self):
 
