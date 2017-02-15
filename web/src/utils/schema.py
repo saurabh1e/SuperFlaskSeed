@@ -9,9 +9,6 @@ class FlaskMarshmallowFactory(Marshmallow):
         super(FlaskMarshmallowFactory, self).__init__(*args, **kwargs)
 
 
-ma = FlaskMarshmallowFactory()
-
-
 class BaseOpts(ModelSchemaOpts):
     def __init__(self, meta):
         if not hasattr(meta, 'sql_session'):
@@ -21,3 +18,6 @@ class BaseOpts(ModelSchemaOpts):
 
 class BaseSchema(ModelSchema):
     OPTIONS_CLASS = BaseOpts
+
+ma = FlaskMarshmallowFactory()
+

@@ -6,6 +6,7 @@ from flask_security import auth_token_required, roles_accepted, roles_required
 
 from .models import db
 from .blue_prints import bp
+from .resource import ModelResource
 from .exceptions import ResourceNotFound, SQLIntegrityError, SQlOperationalError, CustomException
 from .methods import BulkUpdate, List, Fetch, Create, Delete, Update
 
@@ -24,14 +25,14 @@ class ApiFactory(Api):
         def decorator(klass):
             document_name = klass.resource.model.__name__.lower()
             name = kwargs.pop('name', document_name)
-            url = kwargs.pop('url', '/%s/' % to_underscore(klass.resource.model.__name__))
+            url = kwargs.pop('url', '/%s' % to_underscore(klass.resource.model.__name__))
             endpoint = to_underscore(klass.__name__)
             view_func = klass.as_view(name)
             methods = klass.api_methods
 
             for method in methods:
                 if method.slug:
-                    self.app.add_url_rule(url + '<string:slug>/', endpoint=endpoint, view_func=view_func,
+                    self.app.add_url_rule(url + '/<string:slug>', endpoint=endpoint, view_func=view_func,
                                           methods=[method.method], **kwargs)
                 else:
                     self.app.add_url_rule(url, endpoint=endpoint, view_func=view_func,
@@ -45,7 +46,7 @@ api = ApiFactory(bp)
 
 
 class BaseView(Resource):
-    resource = None
+    resource = ModelResource
 
     api_methods = [BulkUpdate, List, Fetch, Create, Delete, Update]
 
@@ -61,20 +62,19 @@ class BaseView(Resource):
             self.method_decorators.append(auth_token_required)
 
     def get(self, slug=None):
+
+        resource = self.resource(**request.args)
         if slug:
-            resource = self.resource(**request.args)
-            obj = self.resource.model.query.get(slug)
+            obj = resource.model.query.get(slug)
             if obj:
                 obj = resource.has_read_permission(request, obj)
-                return make_response(jsonify({'success': True, 'data': self.resource.schema(exclude=resource.exclude,
-                                                                                            only=resource.only).dump(
-                    obj, many=False).data})
-                                     , 200)
+                return make_response(jsonify(resource.schema(exclude=tuple(resource.obj_exclude),
+                                                                  only=tuple(resource.only)).dump(
+                    obj, many=False).data), 200)
 
             return make_response(jsonify({'error': True, 'message': 'Resource not found'}), 404)
 
         else:
-            resource = self.resource(**request.args)
             objects = resource.apply_filters(queryset=self.resource.model.query, **request.args)
             objects = resource.has_read_permission(request, objects)
 
@@ -82,9 +82,11 @@ class BaseView(Resource):
                 objects = resource.apply_ordering(objects, request.args['__order_by'])
 
             resources = objects.paginate(page=resource.page, per_page=resource.limit)
+
             if resources.items:
-                return make_response(jsonify({'success': True, 'data': resource.schema(exclude=resource.exclude,
-                                                                                       only=resource.only)
+
+                return make_response(jsonify({'success': True, 'data': resource.schema(exclude=tuple(resource.obj_exclude),
+                                                                                       only=tuple(resource.only))
                                              .dump(resources.items, many=True).data, 'total': resources.total}), 200)
             return make_response(jsonify({'error': True, 'Message': 'No Resource Found'}), 404)
 

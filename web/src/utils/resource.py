@@ -10,9 +10,9 @@ class ModelResource(object):
 
     filters = {}
 
-    max_limit = 100
+    max_limit = 200
 
-    default_limit = 20
+    default_limit = 50
 
     exclude_related_resource = ()
 
@@ -21,6 +21,10 @@ class ModelResource(object):
     only = ()
 
     exclude = ()
+
+    include = ()
+
+    optional = ()
 
     page = 1
 
@@ -31,10 +35,23 @@ class ModelResource(object):
     roles_required = ()
 
     def __init__(self, **kwargs):
-        self.only = kwargs.pop('__only') if '__only' in kwargs else ()
-        self.exclude = kwargs.pop('__exclude') if '__exclude' in kwargs else ()
-        self.page = kwargs.pop('__page') if '__page' in kwargs else 1
-        self.limit = kwargs.pop('__limit') if '__limit' in kwargs and kwargs['__limit'] < self.default_limit \
+
+        self.only = kwargs.pop('__only') if '__only' in kwargs else self.only
+
+        self.obj_exclude = list(self.exclude)
+        self.obj_optional = list(self.optional)
+
+        self.obj_exclude.extend(kwargs.pop('__exclude')) if '__exclude' in kwargs else None
+        if '__include' in kwargs:
+            for i in kwargs.pop('__include'):
+                try:
+                    self.obj_optional.remove(i)
+                except ValueError:
+                    pass
+        self.obj_exclude.extend(self.obj_optional)
+
+        self.page = int(kwargs.pop('__page')[0]) if '__page' in kwargs else 1
+        self.limit = int(kwargs.pop('__limit')[0]) if '__limit' in kwargs and int(kwargs['__limit'][0]) <= self.max_limit \
             else self.default_limit
 
     def apply_filters(self, queryset, **kwargs):
