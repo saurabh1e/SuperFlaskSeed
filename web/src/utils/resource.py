@@ -73,7 +73,8 @@ class ModelResource(ABC):
 
         self.page = int(request.args.get('__page')) if request.args.get('__page') else 1
         self.limit = int(request.args.get('__limit')) if request.args.get('__limit') \
-            and int(request.args.get('__limit')) <= self.max_limit else self.default_limit
+                                                         and int(
+            request.args.get('__limit')) <= self.max_limit else self.default_limit
 
     def apply_filters(self, queryset, **kwargs):
         for k, v in kwargs.items():
@@ -91,7 +92,8 @@ class ModelResource(ABC):
 
     def patch_resource(self, obj):
         if self.has_change_permission(request, obj) and obj:
-            obj, errors = self.schema(exclude=self.exclude_related_resource).load(request.json, instance=obj, partial=True)
+            obj, errors = self.schema(exclude=self.exclude_related_resource).load(request.json, instance=obj,
+                                                                                  partial=True)
             if errors:
                 db.session.rollback()
                 return {'error': True, 'message': str(errors)}, 400
@@ -129,7 +131,8 @@ class ModelResource(ABC):
                 raise SQLIntegrityError(data=d, message='Integrity Error', operation='Updating Resource', status=400)
             except OperationalError:
                 db.session.rollback()
-                raise SQlOperationalError(data=d, message='Operational Error', operation='Updating Resource', status=400)
+                raise SQlOperationalError(data=d, message='Operational Error', operation='Updating Resource',
+                                          status=400)
         return {'success': True, 'message': 'Resource Updated successfully'}, 201
 
     def save_resource(self):
@@ -160,20 +163,19 @@ class ModelResource(ABC):
         return qs
 
     @abstractmethod
-    def has_change_permission(self, obj):
+    def has_change_permission(self, obj)-> bool:
         return True
 
     @abstractmethod
-    def has_delete_permission(self, obj):
+    def has_delete_permission(self, obj)-> bool:
         return True
 
     @abstractmethod
-    def has_add_permission(self, obj):
+    def has_add_permission(self, obj)-> bool:
         return True
 
 
 class AssociationModelResource(ABC):
-
     model = None
 
     schema = None
@@ -213,7 +215,8 @@ class AssociationModelResource(ABC):
                 raise SQLIntegrityError(data=data, message='Integrity Error', operation='Adding Resource', status=400)
             except OperationalError:
                 db.session.rollback()
-                raise SQlOperationalError(data=data, message='Operational Error', operation='Adding Resource', status=400)
+                raise SQlOperationalError(data=data, message='Operational Error', operation='Adding Resource',
+                                          status=400)
         else:
             raise ResourceNotFound(data=data, message='Object not Found', operation='Updating relation', status=404)
 
@@ -230,7 +233,8 @@ class AssociationModelResource(ABC):
             except IntegrityError:
                 raise SQLIntegrityError(data=data, message='Integrity Error', operation='deleting relation', status=400)
             except OperationalError:
-                raise SQLIntegrityError(data=data, message='Operational Error', operation='deleting relation', status=400)
+                raise SQLIntegrityError(data=data, message='Operational Error', operation='deleting relation',
+                                        status=400)
         else:
             raise ResourceNotFound(data=data, message='Object not Found', operation='deleting relation', status=404)
 
@@ -239,13 +243,13 @@ class AssociationModelResource(ABC):
         return qs
 
     @abstractmethod
-    def has_change_permission(self, obj):
+    def has_change_permission(self, obj)-> bool:
         return True
 
     @abstractmethod
-    def has_delete_permission(self, obj):
+    def has_delete_permission(self, obj)-> bool:
         return True
 
     @abstractmethod
-    def has_add_permission(self, obj):
+    def has_add_permission(self, obj)-> bool:
         return True

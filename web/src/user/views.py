@@ -4,21 +4,33 @@ from src import api
 
 
 @api.register()
-class UserListView(BaseView):
-    resource = UserResource
+class UserView(BaseView):
+
+    @classmethod
+    def get_resource(cls):
+        return UserResource
 
 
 @api.register()
-class UserProfileListView(BaseView):
-    resource = UserProfileResource
+class UserProfileView(BaseView):
+
+    @classmethod
+    def get_resource(cls):
+        return UserProfileResource
 
 
 @api.register()
-class RoleListView(BaseView):
-    resource = RoleResource
+class RoleView(BaseView):
+
+    @classmethod
+    def get_resource(cls):
+        return RoleResource
 
 
 @api.register()
 class UserRoleAssociationView(AssociationView):
 
-    resource = UserRoleResource
+    @classmethod
+    def get_resource(cls):
+        return UserRoleResource
+
