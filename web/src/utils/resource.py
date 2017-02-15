@@ -156,19 +156,19 @@ class ModelResource(ABC):
                 'data': self.schema().dump(objects, many=True).data}, 201
 
     @abstractmethod
-    def has_read_permission(self, request, qs):
+    def has_read_permission(self, qs):
         return qs
 
     @abstractmethod
-    def has_change_permission(self, request, obj):
+    def has_change_permission(self, obj):
         return True
 
     @abstractmethod
-    def has_delete_permission(self, request, obj):
+    def has_delete_permission(self, obj):
         return True
 
     @abstractmethod
-    def has_add_permission(self, request, obj):
+    def has_add_permission(self, obj):
         return True
 
 
@@ -235,17 +235,17 @@ class AssociationModelResource(ABC):
             raise ResourceNotFound(data=data, message='Object not Found', operation='deleting relation', status=404)
 
     @abstractmethod
-    def has_read_permission(self, request, qs):
+    def has_read_permission(self, qs):
         return qs
 
     @abstractmethod
-    def has_change_permission(self, request, obj):
+    def has_change_permission(self, obj):
         return True
 
     @abstractmethod
-    def has_delete_permission(self, request, obj):
+    def has_delete_permission(self, obj):
         return True
 
     @abstractmethod
-    def has_add_permission(self, request, obj):
+    def has_add_permission(self, obj):
         return True

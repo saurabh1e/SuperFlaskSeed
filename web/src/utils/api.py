@@ -46,7 +46,7 @@ api = ApiFactory(bp)
 
 
 class BaseView(Resource):
-    resource = ModelResource
+    resource = None
 
     api_methods = [BulkUpdate, List, Fetch, Create, Delete, Update]
 
@@ -91,7 +91,7 @@ class BaseView(Resource):
 
     def post(self):
         try:
-            data, status = self.resource().save_resource(request)
+            data, status = self.resource().save_resource()
         except (SQLIntegrityError, SQlOperationalError) as e:
             db.session.rollback()
             e.message['error'] = True
@@ -101,7 +101,7 @@ class BaseView(Resource):
     def put(self):
 
         try:
-            data, status = self.resource().update_resource(request)
+            data, status = self.resource().update_resource()
         except (SQLIntegrityError, SQlOperationalError) as e:
             db.session.rollback()
             e.message['error'] = True
@@ -113,7 +113,7 @@ class BaseView(Resource):
         if not obj:
             return make_response(jsonify({'error': True, 'message': 'Resource not found'}), 404)
         try:
-            data, status = self.resource().patch_resource(request, obj)
+            data, status = self.resource().patch_resource(obj)
         except (SQLIntegrityError, SQlOperationalError) as e:
             db.session.rollback()
             e.message['error'] = True
