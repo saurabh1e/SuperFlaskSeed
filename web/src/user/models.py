@@ -4,7 +4,7 @@ from sqlalchemy import UniqueConstraint
 from src import db, BaseMixin, ReprMixin
 
 
-class UserPermission(db.Model, BaseMixin):
+class UserPermission(BaseMixin, db.Model):
 
     user_id = db.Column(db.Integer(), db.ForeignKey('user.id', ondelete='CASCADE'))
     permission_id = db.Column(db.Integer(), db.ForeignKey('permission.id', ondelete='CASCADE'))
@@ -15,7 +15,7 @@ class UserPermission(db.Model, BaseMixin):
     UniqueConstraint(user_id, permission_id)
 
 
-class UserRole(db.Model, BaseMixin):
+class UserRole(BaseMixin, db.Model):
 
     user_id = db.Column(db.Integer(), db.ForeignKey('user.id', ondelete='CASCADE'))
     role_id = db.Column(db.Integer(), db.ForeignKey('role.id', ondelete='CASCADE'))
@@ -26,14 +26,14 @@ class UserRole(db.Model, BaseMixin):
     UniqueConstraint(user_id, role_id)
 
 
-class Role(db.Model, BaseMixin, RoleMixin, ReprMixin):
+class Role(BaseMixin, db.Model, RoleMixin, ReprMixin):
     name = db.Column(db.String(80), unique=True)
     description = db.Column(db.String(255))
 
     users = db.relationship('User', back_populates='roles', secondary='user_role')
 
 
-class User(db.Model, BaseMixin, UserMixin, ReprMixin):
+class User(BaseMixin, db.Model, UserMixin, ReprMixin):
     email = db.Column(db.String(127), unique=True, nullable=False)
     password = db.Column(db.String(255), default='', nullable=False)
     username = db.Column(db.String(127), nullable=True)
@@ -59,7 +59,7 @@ class User(db.Model, BaseMixin, UserMixin, ReprMixin):
             return permission in self.permissions
 
 
-class UserProfile(db.Model, BaseMixin):
+class UserProfile(BaseMixin, db.Model):
     first_name = db.Column(db.String(255))
     last_name = db.Column(db.String(255))
     gender = db.Column(db.Enum('male', 'female', 'na', name='gender'), default='na')
@@ -71,7 +71,7 @@ class UserProfile(db.Model, BaseMixin):
     user = db.relationship('User', back_populates="user_profile", single_parent=True)
 
 
-class Permission(db.Model, BaseMixin, ReprMixin):
+class Permission(BaseMixin, db.Model, ReprMixin):
 
     name = db.Column(db.String(80), unique=True)
     description = db.Column(db.String(255))

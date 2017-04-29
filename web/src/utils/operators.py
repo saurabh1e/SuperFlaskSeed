@@ -1,4 +1,7 @@
 from abc import ABC, abstractstaticmethod
+from datetime import datetime
+from sqlalchemy import func
+from sqlalchemy import cast, Date
 
 
 class Operators(ABC):
@@ -20,6 +23,16 @@ class In(Operators):
         return query.filter(getattr(model, key).in_(values))
 
 
+class NotIn(Operators):
+    op = 'not_in'
+
+    @staticmethod
+    def prepare_queryset(query, model, key, values):
+        if len(values) == 1:
+            values = values[0].split(',')
+        return query.filter(~getattr(model, key).in_(values))
+
+
 class Equal(Operators):
     op = 'equal'
 
@@ -28,12 +41,20 @@ class Equal(Operators):
         return query.filter(getattr(model, key) == value[0])
 
 
+class NotEqual(Operators):
+    op = 'ne'
+
+    @staticmethod
+    def prepare_queryset(query, model, key, value):
+        return query.filter(getattr(model, key) != value[0])
+
+
 class Contains(Operators):
     op = 'contains'
 
     @staticmethod
     def prepare_queryset(query, model, key, value):
-        return query.filter(getattr(model, key).contains(value[0]))
+        return query.filter(func.lower(getattr(model, key)).contains(value[0].lower()))
 
 
 class Boolean(Operators):
@@ -85,3 +106,39 @@ class LesserEqual(Operators):
     @staticmethod
     def prepare_queryset(query, model, key, value):
         return query.filter(getattr(model, key) <= value[0])
+
+
+class DateEqual(Operators):
+    op = 'date_equal'
+
+    @staticmethod
+    def prepare_queryset(query, model, key, value):
+        return query.filter(cast(getattr(model, key), Date) == datetime.strptime(value[0], '%Y-%m-%dT%H:%M:%S.%fZ').date())
+
+
+class DateGreaterEqual(Operators):
+    op = 'date_gte'
+
+    @staticmethod
+    def prepare_queryset(query, model, key, value):
+        return query.filter(cast(getattr(model, key), Date) >= datetime.strptime(value[0], '%Y-%m-%dT%H:%M:%S.%fZ').date())
+
+
+class DateLesserEqual(Operators):
+    op = 'date_lte'
+
+    @staticmethod
+    def prepare_queryset(query, model, key, value):
+        return query.filter(cast(getattr(model, key), Date) <= datetime.strptime(value[0], '%Y-%m-%dT%H:%M:%S.%fZ').date())
+
+
+class DateBetween(Operators):
+    op = 'date_btw'
+
+    @staticmethod
+    def prepare_queryset(query, model, key, values):
+        if len(values) == 1:
+            values = values[0].split(',')
+        return query.filter(cast(getattr(model, key), Date)
+                            .between(datetime.strptime(values[0], '%Y-%m-%dT%H:%M:%S.%fZ').date(),
+                                     datetime.strptime(values[1], '%Y-%m-%dT%H:%M:%S.%fZ').date()))

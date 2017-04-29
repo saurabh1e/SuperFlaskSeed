@@ -6,14 +6,16 @@ from flask_restful import Api
 from flask_restful import Resource
 from flask import request, jsonify, make_response
 from flask_security import auth_token_required, roles_accepted, roles_required
+from flask_excel import make_response_from_records
 
 from .models import db
 from .blue_prints import bp
-from .resource import ModelResource
+from .resource import ModelResource, AssociationModelResource
 from .exceptions import ResourceNotFound, SQLIntegrityError, SQlOperationalError, CustomException
 from .methods import BulkUpdate, List, Fetch, Create, Delete, Update
 
 ModelResourceType = TypeVar('ModelResourceType', bound=ModelResource)
+AssociationModelResource = TypeVar('AssociationModelResource', bound=AssociationModelResource)
 
 
 def to_underscore(name):
@@ -73,9 +75,9 @@ class BaseView(Resource):
 
     def get(self, slug=None):
         if slug:
-            obj = self.resource.model.query.get(slug)
+            obj = self.resource.model.query.filter(self.resource.model.id == slug)
+            obj = self.resource.has_read_permission(obj).first()
             if obj:
-                obj = self.resource.has_read_permission(request, obj)
                 return make_response(jsonify(self.resource.schema(exclude=tuple(self.resource.obj_exclude),
                                                                   only=tuple(self.resource.obj_only)).dump(
                     obj, many=False).data), 200)
@@ -84,20 +86,24 @@ class BaseView(Resource):
 
         else:
             objects = self.resource.apply_filters(queryset=self.resource.model.query, **request.args)
-            objects = self.resource.has_read_permission(request, objects)
+            objects = self.resource.has_read_permission(objects)
 
             if '__order_by' in request.args:
                 objects = self.resource.apply_ordering(objects, request.args['__order_by'])
 
+            if '__export__' in request.args and self.resource.export is True:
+                objects = objects.paginate(page=self.resource.page, per_page=self.resource.max_export_limit)
+                return make_response_from_records(
+                    self.resource.schema(exclude=tuple(self.resource.obj_exclude), only=tuple(self.resource.obj_only))
+                        .dump(objects.items, many=True).data, 'csv', 200,  self.resource.model.__name__)
+
             resources = objects.paginate(page=self.resource.page, per_page=self.resource.limit)
-
             if resources.items:
-
                 return make_response(jsonify({'success': True,
                                               'data': self.resource.schema(exclude=tuple(self.resource.obj_exclude),
                                                                            only=tuple(self.resource.obj_only))
                                              .dump(resources.items, many=True).data, 'total': resources.total}), 200)
-            return make_response(jsonify({'error': True, 'Message': 'No Resource Found'}), 404)
+            return make_response(jsonify({'error': True, 'message': 'No Resource Found'}), 404)
 
     def post(self):
         try:
@@ -134,19 +140,19 @@ class BaseView(Resource):
 
         obj = self.resource.model.query.get(slug)
         if obj:
-            if self.resource.has_delete_permission(request, obj):
+            if self.resource.has_delete_permission(obj):
                 db.session.delete(obj)
                 db.session.commit()
                 return make_response(jsonify({}), 204)
             else:
                 return make_response(
-                    jsonify({'error': True, 'Message': 'Forbidden Permission Denied To Delete Resource'}), 403)
+                    jsonify({'error': True, 'message': 'Forbidden Permission Denied To Delete Resource'}), 403)
         return make_response(jsonify({'error': True, 'message': 'Resource not found'}), 404)
 
 
 class AssociationView(Resource):
 
-    api_methods = [Update]
+    api_methods = [Create, List, Fetch]
 
     def __init__(self):
         if self.get_resource is not None:
@@ -154,7 +160,7 @@ class AssociationView(Resource):
             self.add_method_decorator()
 
     @abstractproperty
-    def get_resource(self) -> ModelResourceType:
+    def get_resource(self) -> AssociationModelResource:
         pass
 
     def add_method_decorator(self):
@@ -164,18 +170,42 @@ class AssociationView(Resource):
             self.method_decorators.append(roles_accepted(*[i for i in self.resource.roles_accepted]))
             self.method_decorators.append(auth_token_required)
 
-    def update(self):
+    def get(self, slug=None):
+        if slug:
+            obj = self.resource.model.query.filter(self.resource.model.id == slug)
+            obj = self.resource.has_read_permission(obj).first()
+            if obj:
+                return make_response(jsonify(self.resource.schema(exclude=tuple(self.resource.obj_exclude),
+                                                                  only=tuple(self.resource.obj_only)).dump(
+                    obj, many=False).data), 200)
 
+            return make_response(jsonify({'error': True, 'message': 'Resource not found'}), 404)
+
+        else:
+            objects = self.resource.apply_filters(queryset=self.resource.model.query, **request.args)
+            objects = self.resource.has_read_permission(objects)
+
+            if '__order_by' in request.args:
+                objects = self.resource.apply_ordering(objects, request.args['__order_by'])
+            resources = objects.paginate(page=self.resource.page, per_page=self.resource.limit)
+            if resources.items:
+                return make_response(jsonify({'success': True,
+                                              'data': self.resource.schema(exclude=tuple(self.resource.obj_exclude),
+                                                                           only=tuple(self.resource.obj_only))
+                                             .dump(resources.items, many=True).data, 'total': resources.total}), 200)
+            return make_response(jsonify({'error': True, 'message': 'No Resource Found'}), 404)
+
+    def post(self):
         data = request.json if isinstance(request.json, list) else [request.json]
         for d in data:
             try:
                 db.session.begin_nested()
                 if d['__action'] == 'add':
-                    self.resource.add_relation(request, d)
+                    self.resource.add_relation(d)
                 if d['__action'] == 'update':
-                    self.resource.update_relation(request, d)
+                    self.resource.update_relation(d)
                 elif d['__action'] == 'remove':
-                    self.resource.remove_relation(request, d)
+                    self.resource.remove_relation(d)
             except (ResourceNotFound, SQLIntegrityError, SQlOperationalError, CustomException) as e:
                 db.session.rollback()
                 e.message['error'] = True
