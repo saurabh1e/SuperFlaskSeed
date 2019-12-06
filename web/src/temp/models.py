@@ -7,49 +7,32 @@ from src import db, BaseMixin, ReprMixin
 class Order(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
-    transaction_id = db.Column(db.Integer, db.ForeignKey('transaction.id'), nullable=False)
+    inline_items = db.relationship('InlineItem', back_populates='order', uselist=True, lazy='dynamic')
 
-    inline_items = db.relationship('InlineItem', backref='order')
-    admin = db.relationship('AdminRole', backref='order')
-    vendor = db.relationship('VendorRole', backref='order')
+    transaction_id = db.Column(db.Integer, db.ForeignKey('transaction.id'), nullable=False)
+    admin_id = db.Column(db.ForeignKey('user.id'), nullable=False)
+    vendor_id = db.Column(db.ForeignKey('user.id'), nullable=False)
+
+    admin = db.relationship('AdminRole', backref='order', foreign_keys=[admin_id])
+    vendor = db.relationship('VendorRole', backref='order', foreign_keys=[vendor_id])
 
 
 class InlineItem(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), nullable=False)
-    order_id = db.Column(db.Integer, db.ForeignKey(Order.id), nullable=False)
+    unique_id = db.Column(db.String(64), nullable=False, unique=True)
+    order_id = db.Column(db.ForeignKey('order.id'), nullable=False, back_populates='inline_items')
+    transfer_id = db.Column(db.ForeignKey('transfer.id'), nullable=False, back_populates='inline_items')
 
 
-class Transaction(db.Model):
+class Transfer(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
-    amount = db.Column(db.Integer)
-    orders = db.relationship('Order', backref='transaction')
+    amount = db.Column(db.Integer, nullable=False)
+    admin_id = db.Column(db.ForeignKey('user.id'), nullable=False)
+    client_id = db.Column(db.ForeignKey('user.id'), nullable=False)
 
-
-class AdminRole(BaseMixin, db.Model):
-
-    admin_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    role_id = db.Column(db.Integer(), db.ForeignKey('role.id'))
-
-    user = db.relationship('User', foreign_keys=[admin_id])
-    role = db.relationship('Role', foreign_keys=[role_id])
-
-
-class VendorRole(BaseMixin, db.Model):
-
-    vendor_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    role_id = db.Column(db.Integer(), db.ForeignKey('role.id'))
-
-    user = db.relationship('User', foreign_keys=[vendor_id])
-    role = db.relationship('Role', foreign_keys=[role_id])
-
-
-class CustomerRole(BaseMixin, db.Model):
-
-    customer_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    role_id = db.Column(db.Integer(), db.ForeignKey('role.id'))
-
-    user = db.relationship('User', foreign_keys=[customer_id])
-    role = db.relationship('Role', foreign_keys=[role_id])
+    inline_items = db.relationship('InlineItem', uselist=True, lazy='dynamic')
+    admin = db.relationship('AdminRole', backref='order', foreign_keys=[admin_id])
+    client = db.relationship('VendorRole', backref='order', foreign_keys=[client_id])
