@@ -181,7 +181,7 @@ class ModelResource(ABC):
                     .dump(objects, many=True).data}, 201
 
     @abstractmethod
-    def has_read_permission(self, qs) -> Type(db.Model):
+    def has_read_permission(self, qs) -> type(db.Model):
         return qs
 
     @abstractmethod

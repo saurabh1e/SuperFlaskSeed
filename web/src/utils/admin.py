@@ -15,4 +15,4 @@ class MyAdminIndexView(AdminIndexView):
             return redirect(url_for('security.login'))
         return super(MyAdminIndexView, self).index()
 
-admin = Admin(name="Test App", template_mode='bootstrap3', index_view=MyAdminIndexView(url='/test/v1/admin'))
+admin = Admin(name="Test App", template_mode='bootstrap3', index_view=MyAdminIndexView(url='/api/v1/admin'))

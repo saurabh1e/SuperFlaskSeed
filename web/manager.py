@@ -7,9 +7,9 @@ from flask import url_for
 
 from src import api, db, ma, create_app, configs, bp, security, admin
 
-config = os.environ.get('PYTH_SRVR')
+config = os.environ.get('PYTH_SRVR', 'default')
 
-config = configs.get(config, 'default')
+config = configs.get(config)
 
 extensions = [api, db, ma, security, admin]
 bps = [bp]

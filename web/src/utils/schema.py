@@ -10,10 +10,10 @@ class FlaskMarshmallowFactory(Marshmallow):
 
 
 class BaseOpts(ModelSchemaOpts):
-    def __init__(self, meta):
+    def __init__(self, meta, ordered=False):
         if not hasattr(meta, 'sql_session'):
             meta.sqla_session = db.session
-        super(BaseOpts, self).__init__(meta)
+        super(BaseOpts, self).__init__(meta, ordered)
 
 
 class BaseSchema(ModelSchema):
