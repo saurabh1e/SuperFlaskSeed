@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Type, List, Tuple
+from typing import Type, List, Tuple, TypeVar
 
 from flask import request
 from sqlalchemy.exc import OperationalError, IntegrityError
@@ -114,11 +114,14 @@ class ModelResource(ABC):
 
             try:
                 db.session.commit()
-            except IntegrityError:
+                self.after_objects_update([obj])
+            except IntegrityError as e:
+                print(e)
                 db.session.rollback()
                 raise SQLIntegrityError(data={}, message='Integrity Error', operation='Adding Resource',
                                         status=400)
-            except OperationalError:
+            except OperationalError as e:
+                print(e)
                 db.session.rollback()
                 raise SQlOperationalError(data={}, message='Operational Error', operation='Adding Resource',
                                           status=400)
@@ -144,13 +147,16 @@ class ModelResource(ABC):
             try:
                 db.session.commit()
                 objects.append(obj)
-            except IntegrityError:
+            except IntegrityError as e:
+                print(e)
                 db.session.rollback()
                 raise SQLIntegrityError(data=d, message='Integrity Error', operation='Updating Resource', status=400)
-            except OperationalError:
+            except OperationalError as e:
+                print(e)
                 db.session.rollback()
                 raise SQlOperationalError(data=d, message='Operational Error', operation='Updating Resource',
                                           status=400)
+        self.after_objects_update(objects)
         return {'success': True, 'message': 'Resource Updated successfully',
                 'data': self.schema(exclude=tuple(self.obj_exclude), only=tuple(self.obj_only))
                     .dump(objects, many=True).data}, 201
@@ -169,11 +175,13 @@ class ModelResource(ABC):
             return {'error': True, 'message': 'Forbidden Permission Denied To Add Resource'}, 403
         try:
             db.session.commit()
+            self.after_objects_save(objects)
         except IntegrityError as e:
             db.session.rollback()
             print(e)
             raise SQLIntegrityError(data=data, message='Integrity Error', operation='Adding Resource', status=400)
-        except OperationalError:
+        except OperationalError as e:
+            print(e)
             db.session.rollback()
             raise SQlOperationalError(data=data, message='Operational Error', operation='Adding Resource', status=400)
         return {'success': True, 'message': 'Resource added successfully',
@@ -181,7 +189,7 @@ class ModelResource(ABC):
                     .dump(objects, many=True).data}, 201
 
     @abstractmethod
-    def has_read_permission(self, qs) -> Type(db.Model):
+    def has_read_permission(self, qs):
         return qs
 
     @abstractmethod
@@ -195,6 +203,12 @@ class ModelResource(ABC):
     @abstractmethod
     def has_add_permission(self, obj) -> bool:
         return True
+
+    def after_objects_update(self, objects) -> None:
+        pass
+
+    def after_objects_save(self, objects) -> None:
+        pass
 
 
 class AssociationModelResource(ABC):

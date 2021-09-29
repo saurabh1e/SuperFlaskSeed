@@ -38,7 +38,7 @@ class Equal(Operators):
 
     @staticmethod
     def prepare_queryset(query, model, key, value):
-        return query.filter(getattr(model, key) == value[0])
+        return query.filter(getattr(model, key) == value)
 
 
 class NotEqual(Operators):

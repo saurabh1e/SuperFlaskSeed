@@ -137,3 +137,4 @@ tests/cover
 .elasticbeanstalk/*
 !.elasticbeanstalk/*.cfg.yml
 !.elasticbeanstalk/*.global.yml
+src/tasks/*

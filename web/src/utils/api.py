@@ -1,19 +1,23 @@
 import re
 from typing import TypeVar
-from abc import abstractproperty
+from abc import abstractmethod, abstractproperty
+from functools import wraps
 
 from flask_restful import Api
 from flask_restful import Resource
-from flask import request, jsonify, make_response
-from flask_security import auth_token_required, roles_accepted, roles_required
+from flask import request, jsonify, make_response, has_request_context
+from flask_security import roles_accepted, roles_required, current_user
+from flask_security.decorators import _security, _get_unauthorized_response, current_app, \
+    _request_ctx_stack, identity_changed, Identity
 from flask_excel import make_response_from_records
+from itsdangerous import BadSignature, SignatureExpired
+from sqlalchemy.exc import DataError
 
 from .models import db
 from .blue_prints import bp
 from .resource import ModelResource, AssociationModelResource
 from .exceptions import ResourceNotFound, SQLIntegrityError, SQlOperationalError, CustomException
 from .methods import BulkUpdate, List, Fetch, Create, Delete, Update
-
 ModelResourceType = TypeVar('ModelResourceType', bound=ModelResource)
 AssociationModelResource = TypeVar('AssociationModelResource', bound=AssociationModelResource)
 
@@ -21,6 +25,32 @@ AssociationModelResource = TypeVar('AssociationModelResource', bound=Association
 def to_underscore(name):
     s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
     return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()
+
+
+def _check_token():
+    header_key = _security.token_authentication_header
+    token = request.headers.get(header_key, '')
+    user = _security.login_manager.token_callback(token)
+    if user and user.is_authenticated:
+        app = current_app._get_current_object()
+        _request_ctx_stack.top.user = user
+        identity_changed.send(app, identity=Identity(user.id))
+        return True
+
+    return False
+
+
+def auth_token_required(fn):
+    @wraps(fn)
+    def decorated(*args, **kwargs):
+        if _check_token():
+            return fn(*args, **kwargs)
+        if _security._unauthorized_callback:
+            return _security._unauthorized_callback()
+        else:
+            return _get_unauthorized_response()
+
+    return decorated
 
 
 class ApiFactory(Api):

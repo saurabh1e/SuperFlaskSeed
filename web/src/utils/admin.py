@@ -11,8 +11,9 @@ class MyAdminIndexView(AdminIndexView):
 
     @expose('/')
     def index(self):
-        if not current_user.is_authenticated:
-            return redirect(url_for('security.login'))
+        # if not current_user.is_authenticated:
+        #     return redirect(url_for('security.login'))
         return super(MyAdminIndexView, self).index()
 
-admin = Admin(name="Test App", template_mode='bootstrap3', index_view=MyAdminIndexView(url='/test/v1/admin'))
+
+admin = Admin(name="ZFW", template_mode='bootstrap3', index_view=MyAdminIndexView(url='/api/v1/admin'))

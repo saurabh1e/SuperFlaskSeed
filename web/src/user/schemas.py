@@ -1,5 +1,5 @@
 from src import ma, BaseSchema
-from .models import UserProfile, User, Role, Permission, UserRole
+from .models import User, Role, Permission, UserRole, PosOutlet, Partner, Address, CommissionSlab
 
 
 class UserSchema(BaseSchema):
@@ -12,20 +12,7 @@ class UserSchema(BaseSchema):
     id = ma.Integer(dump_only=True)
     email = ma.Email(unique=True, primary_key=True, required=True)
     username = ma.String(required=True)
-    user_profile = ma.Nested('UserProfileSchema', load=True, many=False, exclude=('user',))
     roles = ma.Nested('RoleSchema', many=True, dump_only=True)
-
-
-class UserProfileSchema(BaseSchema):
-
-    class Meta:
-        model = UserProfile
-        exclude = ('created_on', 'updated_on')
-
-    id = ma.Integer(load=True)
-
-    first_name = ma.String(load=True)
-    user = ma.Nested('UserSchema', load=False)
 
 
 class RoleSchema(BaseSchema):
@@ -54,3 +41,31 @@ class PermissionSchema(BaseSchema):
         model = Permission
         exclude = ('users',)
 
+
+class PosOutletSchema(BaseSchema):
+
+    class Meta:
+        model = PosOutlet
+
+    kitchen_partner_id = ma.Integer(load=True, dump=True)
+    brand_partner_id = ma.Integer(load=True, dump=True)
+
+
+class PartnerSchema(BaseSchema):
+
+    class Meta:
+        model = Partner
+
+    address = ma.Nested('AddressSchema', dump_only=True)
+    commissions = ma.Nested('CommissionSlabSchema', many=True, load=True)
+
+
+class AddressSchema(BaseSchema):
+
+    class Meta:
+        model = Address
+
+
+class CommissionSlabSchema(BaseSchema):
+    class Meta:
+        model = CommissionSlab

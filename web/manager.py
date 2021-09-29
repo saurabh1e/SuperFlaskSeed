@@ -1,6 +1,6 @@
 import os
 
-from flask_migrate import Migrate, MigrateCommand
+from flask_migrate import Migrate
 import urllib.parse as up
 from flask_script import Manager
 from flask import url_for
@@ -18,7 +18,7 @@ app = create_app(__name__, config, extensions=extensions, blueprints=bps)
 
 manager = Manager(app)
 migrate = Migrate(app, db)
-manager.add_command('db', MigrateCommand)
+# manager.add_command('db', )
 
 
 @manager.shell

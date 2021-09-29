@@ -1,79 +1,19 @@
-from .schemas import User, UserProfile, UserSchema, UserProfileSchema, Role, RoleSchema, UserRole, UserRoleSchema
+from flask_login import current_user
 
-from src.utils import ModelResource, operators as ops, AssociationModelResource
-
-
-class UserProfileResource(ModelResource):
-
-    model = UserProfile
-    schema = UserProfileSchema
-
-    def has_read_permission(self, request, qs):
-        return qs
-
-    def has_change_permission(self, request, obj):
-        return True
-
-    def has_delete_permission(self, request, obj):
-        return True
-
-    def has_add_permission(self, request, obj):
-        if not obj.user_id:
-            obj.user_id = 1
-        return True
-
-
-class RoleResource(ModelResource):
-    model = Role
-    schema = RoleSchema
-
-    def has_read_permission(self, request, qs):
-        return qs
-
-    def has_change_permission(self, request, obj):
-        return True
-
-    def has_delete_permission(self, request, obj):
-        return True
-
-    def has_add_permission(self, request, obj):
-        if not obj.user_id:
-            obj.user_id = 1
-        return True
-
-
-class UserRoleResource(AssociationModelResource):
-
-    model = UserRole
-    schema = UserRoleSchema
-
-    def has_read_permission(self, request, qs):
-        return qs
-
-    def has_change_permission(self, request, obj):
-        return True
-
-    def has_delete_permission(self, request, obj):
-        return True
-
-    def has_add_permission(self, request, obj):
-        if not obj.user_id:
-            obj.user_id = 1
-        return True
+from src.utils import ModelResource, operators as ops
+from .models import User, Partner, PosOutlet
+from .schemas import UserSchema, PartnerSchema, PosOutletSchema
 
 
 class UserResource(ModelResource):
-
     model = User
     schema = UserSchema
+
+    auth_required = True
 
     filters = {
         'username': [ops.Equal, ops.Contains],
         'active': [ops.Boolean]
-    }
-
-    related_resource = {
-        'user_profile': UserProfileResource
     }
 
     order_by = ['email', 'id']
@@ -82,15 +22,75 @@ class UserResource(ModelResource):
 
     exclude = ()
 
-    def has_read_permission(self, request, qs):
+    def has_read_permission(self, qs):
+        return qs.filter(User.id == current_user.id)
+
+    def has_change_permission(self, obj):
+        return True
+
+    def has_delete_permission(self, obj):
+        return True
+
+    def has_add_permission(self, obj):
+        return True
+
+
+class PosOutletResource(ModelResource):
+    model = PosOutlet
+    schema = PosOutletSchema
+
+    auth_required = True
+
+    filters = {
+        'username': [ops.Equal, ops.Contains],
+        'active': [ops.Boolean]
+    }
+
+    order_by = ['email', 'id']
+
+    only = ()
+
+    exclude = ()
+
+    def has_read_permission(self, qs):
         return qs
 
-    def has_change_permission(self, request, obj):
+    def has_change_permission(self, obj):
         return True
 
-    def has_delete_permission(self, request, obj):
+    def has_delete_permission(self, obj):
         return True
 
-    def has_add_permission(self, request, obj):
+    def has_add_permission(self, obj):
+        return True
 
+
+class PartnerResource(ModelResource):
+    model = Partner
+    schema = PartnerSchema
+
+    auth_required = True
+
+    filters = {
+        'username': [ops.Equal, ops.Contains],
+        'active': [ops.Boolean],
+        'type': [ops.Equal, ops.Contains]
+    }
+
+    order_by = ['email', 'id']
+
+    only = ()
+
+    exclude = ()
+
+    def has_read_permission(self, qs):
+        return qs
+
+    def has_change_permission(self, obj):
+        return True
+
+    def has_delete_permission(self, obj):
+        return True
+
+    def has_add_permission(self, obj):
         return True

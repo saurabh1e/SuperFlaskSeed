@@ -16,16 +16,16 @@ class BaseConfig:
     SECURITY_TRACKABLE = True
     SECURITY_PASSWORD_SALT = 'something_super_secret_change_in_production'
     WTF_CSRF_ENABLED = False
-    SECURITY_LOGIN_URL = '/test/v1/login/'
-    SECURITY_LOGOUT_URL = '/test/v1/logout/'
-    SECURITY_REGISTER_URL = '/test/v1/register/'
-    SECURITY_RESET_URL = '/test/v1/reset/'
-    SECURITY_CONFIRM_URL = '/test/v1/confirm/'
+    SECURITY_LOGIN_URL = '/api/v1/login/'
+    SECURITY_LOGOUT_URL = '/api/v1/logout/'
+    SECURITY_REGISTER_URL = '/api/v1/register/'
+    SECURITY_RESET_URL = '/api/v1/reset/'
+    SECURITY_CONFIRM_URL = '/api/v1/confirm/'
     SECURITY_REGISTERABLE = True
     SECURITY_CONFIRMABLE = True
     SECURITY_RECOVERABLE = True
-    SECURITY_POST_LOGIN_VIEW = '/test/v1/admin/'
-    AUTH_HEADER_NAME = 'authentication-token'
+    SECURITY_POST_LOGIN_VIEW = '/api/v1/admin/'
+    SECURITY_TOKEN_AUTHENTICATION_HEADER = 'authorization'
     MAX_AGE = 86400
     OAUTH2_PROVIDER_TOKEN_EXPIRES_IN = 86400
 
@@ -39,7 +39,7 @@ class BaseConfig:
 class DevConfig(BaseConfig):
     DEBUG = True
     TESTING = True
-    SQLALCHEMY_DATABASE_URI = 'postgresql://postgres:@localhost/flask_test'
+    SQLALCHEMY_DATABASE_URI =  'postgresql+psycopg2://postgres:@localhost/zfw'
 
 
 class TestConfig(BaseConfig):
